@@ -1,2 +1,5 @@
 start:
-	go run main.go
+	go run cmd/duckmq.go
+
+messages:
+	go run scripts/messages.go
