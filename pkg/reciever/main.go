@@ -5,16 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
+
+	"github.com/RobMin/duckmq/pkg/common"
 )
 
-type MessageRequest struct {
-	Id        string    `json:"id"`
-	Timestamp time.Time `json:"timestamp"`
-	Message   string    `json:"message"`
-}
-
-func Main() {
+func Init(message_dispatch_channel chan common.MessageRequest) {
 	http.HandleFunc("/message", func(res http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			http.Error(res, "Invalid request method", http.StatusMethodNotAllowed)
@@ -28,7 +23,7 @@ func Main() {
 		}
 		defer req.Body.Close()
 
-		var data MessageRequest
+		var data common.MessageRequest
 		fmt.Print(string(body))
 		err = json.Unmarshal(body, &data)
 		if err != nil {
@@ -38,6 +33,8 @@ func Main() {
 
 		response := fmt.Sprintf("Received: Id=%s, Timestamp=%s, Message=%s", data.Id, data.Timestamp.String(), data.Message)
 		res.Write([]byte(response))
+
+		go func() { message_dispatch_channel <- data }()
 	})
 
 	fmt.Println("Server is running on http://localhost:8080")
